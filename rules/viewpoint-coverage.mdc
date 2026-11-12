@@ -1,0 +1,52 @@
+---
+description: Ma trận coverage Test Viewpoint ↔ Test Case. Dùng khi review coverage, gap analysis, chốt bộ TC, RBT.
+globs: **/*coverage*.md, **/*viewpoint*.md, **/*viewpoint*.csv, test case/**/*.md, test case/**/*.csv
+alwaysApply: false
+---
+
+# Viewpoint Coverage
+
+Không giao bộ test case khi chưa có ma trận coverage. Coverage đo **góc nhìn đã được phủ**, không đo số lượng TC.
+
+## Ma trận bắt buộc
+
+| VP ID | Category | Viewpoint | Risk | TC IDs | # TCs | Status |
+|---|---|---|---|---|---|---|
+| VP_LOGIN_001 | Functional | Credential hợp lệ | High | CRM_LOGIN_TC_001 | 1 | ✅ |
+| VP_LOGIN_002 | Input / Field | Email sai định dạng | High | CRM_LOGIN_TC_004, 005, 006 | 3 | ✅ |
+| VP_LOGIN_007 | Resilience | Double submit login | Medium | — | 0 | ❌ GAP |
+
+## Định nghĩa phủ
+
+| Status | Điều kiện |
+|---|---|
+| ✅ Covered | ≥1 TC gắn đúng VP; High risk nên ≥2 TC (happy + negative/boundary) |
+| ⚠️ Weak | Có TC nhưng chỉ happy path, data mơ hồ, hoặc chưa đủ BVA/EP |
+| ❌ GAP | 0 TC |
+| ⚠ Orphan | TC không gắn VP, hoặc VP ID không tồn tại |
+
+```
+Coverage % = số VP Covered / tổng số VP
+```
+
+High + Medium phải **100% Covered** trước khi deliver. Low risk được để GAP chỉ khi ghi lý do (out of scope / accepted risk).
+
+## Gap analysis — phải làm
+
+1. Liệt kê VP `❌ GAP` và `⚠️ Weak`.
+2. Liệt kê TC orphan — sửa `VP ID` hoặc xóa TC thừa.
+3. Cross-check REQ/AC: requirement nào chưa có viewpoint → quay lại `test-viewpoint.mdc`.
+4. Đề xuất TC cần bổ sung (không im lặng bỏ gap).
+
+## Cổng chặn (Definition of Done)
+
+- [ ] Mọi VP High/Medium = ✅
+- [ ] Không còn TC orphan
+- [ ] Mọi REQ/AC có ≥1 VP
+- [ ] Gap Low risk (nếu có) đã ghi lý do
+- [ ] Không báo "đã cover" khi chỉ đếm số TC
+
+```
+❌ BAD: "Đã có 40 test cases, coverage đủ"
+✅ GOOD: "12/12 VP High-Medium covered; 1 VP Low (A11y Tab order) accepted gap — PO xác nhận"
+```

@@ -1,0 +1,60 @@
+---
+description: Sinh test case từ Test Viewpoint đã chốt. Dùng khi generate test cases, viết TC manual, RBT, mapping viewpoint → TC.
+globs: test case/**/*.md, test case/**/*.csv, **/*test_case*.md, **/*testcase*.md, **/*checklist*.md, **/*checklist*.csv
+alwaysApply: false
+---
+
+# Test Case Generation
+
+Chỉ sinh test case **sau khi** đã có bảng viewpoint. Mỗi test case phải gắn `VP ID`. Không invent viewpoint mới trong lúc viết TC — quay lại `test-viewpoint.mdc`.
+
+## Mapping
+
+- 1 viewpoint → 1..n test cases (High risk: nhiều TC hơn).
+- 1 test case → **đúng 1** viewpoint chính (có thể ghi VP phụ nếu cần).
+- Không gộp validation nhiều field vào 1 TC.
+
+```
+VP_LOGIN_002 Email sai định dạng
+  → LOGIN_TC_004 thiếu @
+  → LOGIN_TC_005 thiếu domain
+  → LOGIN_TC_006 nhiều @
+```
+
+## Cột bắt buộc
+
+`TC ID` | `Module` | `VP ID` | `Risk Level` | `Test Scenario` | `Pre-Condition` | `Test Steps` | `Expected Result` | `Test Data` | `Priority` | `Automatable` | `Auto Type` | `Tags`
+
+- TC ID: `[DỰ_ÁN]_[MODULE]_TC_[NNN]` (ví dụ `CRM_LOGIN_TC_001`)
+- Steps và Expected đánh số, khớp **1-1**
+- Automatable: `Yes` / `No` / `Partial` — Auto Type: `UI` / `API` / `Unit` / `N/A`
+- Tags: `@Smoke` `@Regression` `@CriticalPath` `@Security` `@Boundary`
+
+## Test data — cụ thể, không mô tả
+
+```
+❌ SAI: "Nhập email hợp lệ"
+✅ ĐÚNG: "Nhập email: test_khachhang_01@domain.com"
+
+❌ SAI: "Nhập quá maxlength"
+✅ ĐÚNG: "Nhập 256 ký tự 'A' vào Name (max: 255)"
+```
+
+## Kỹ thuật (theo viewpoint)
+
+- **EP:** 1 đại diện / lớp hợp lệ hoặc không hợp lệ
+- **BVA:** min, min-1, max, max+1 (và empty/zero nếu liên quan)
+- **Decision Table:** mỗi rule/cột → 1 TC
+- **State Transition:** mỗi chuyển hợp lệ + mỗi chuyển bị cấm
+
+## Self-Quality Gate (trước khi giao)
+
+- [ ] Mọi TC có `VP ID` tồn tại trong bảng viewpoint
+- [ ] TC ID unique, đúng format
+- [ ] Steps ↔ Expected 1-1
+- [ ] 100% test data cụ thể
+- [ ] Không gộp nhiều field/validation vào 1 TC
+- [ ] Metadata Automatable / Auto Type / Tags đủ
+
+Sau khi sinh TC, **bắt buộc** chạy coverage theo `viewpoint-coverage.mdc`.
+

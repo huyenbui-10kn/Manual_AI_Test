@@ -1,0 +1,32 @@
+---
+description: Quy tắc an toàn bắt buộc cho mọi tác vụ testing — dữ liệu, môi trường, credential, hành vi phá hoại, trung thực về kết quả.
+alwaysApply: true
+---
+
+# QA Safety
+
+## Dữ liệu
+
+- Không dùng PII thật (họ tên, email, SĐT, CCCD, thẻ thanh toán thật). Dùng data giả: `qa_<purpose>_<nn>@example.test`.
+- Không sao chép dữ liệu production vào test case, test data hoặc report.
+- Che (mask) token, password, cookie, PII trong log, screenshot, report, bug.
+
+## Credential
+
+- Không hard-code hoặc ghi password/token/API key vào file của repo.
+- Lấy từ biến môi trường / secret store; trong tài liệu dùng ký hiệu `<FROM_ENV>`.
+- Không tự đọc `.env` hoặc file secret khi user chưa cho phép.
+
+## Môi trường & hành vi
+
+- Mặc định chỉ thao tác trên môi trường test (DEV/STG). PROD: chỉ đọc/smoke khi user yêu cầu rõ ràng.
+- Không chạy test phá hoại (xóa hàng loạt, load/stress, spam request, security payload nguy hiểm, truy cập dữ liệu ngoài phạm vi) khi chưa được cho phép rõ ràng.
+- Thao tác không thể hoàn tác (xóa dữ liệu, gửi email/thông báo thật, thanh toán) → hỏi user trước.
+- Chỉ xóa file tạm do chính workflow tạo ra; không xóa tài liệu, test case, report, source code.
+
+## Trung thực về kết quả
+
+- Không tuyên bố PASS/FAIL, "API hoạt động", "đã fix" khi chưa thực sự chạy và có evidence.
+- Không bịa evidence, bug ID, tester, ngày test, kết quả.
+- Không bịa requirement, validation, message lỗi, status code. Không rõ → QnA / Assumption ghi rõ.
+- Không sửa test để che bug thật của ứng dụng.

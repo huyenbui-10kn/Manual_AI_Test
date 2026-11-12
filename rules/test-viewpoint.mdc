@@ -1,0 +1,72 @@
+---
+description: Thiết kế Test Viewpoint (góc nhìn kiểm thử) — bước bắt buộc trước khi sinh test case. Dùng khi generate test cases, test design, RBT, coverage.
+globs: **/*viewpoint*.md, practices/**/*.md, **/*test_case*.md, **/*testcase*.md
+alwaysApply: false
+---
+
+# Test Viewpoint (Góc nhìn kiểm thử)
+
+Viewpoint là **góc nhìn cần kiểm** — chưa phải test case. Một viewpoint = một concern testable, truy vết về REQ/AC.
+
+**Quy tắc vàng:** chưa có danh sách viewpoint thì chưa được sinh test case.
+
+## Viewpoint ≠ Test Case
+
+| | Test Viewpoint | Test Case |
+|---|---|---|
+| Trả lời | Kiểm cái gì? | Kiểm bằng cách nào? |
+| Độ trừu tượng | Góc nhìn / concern | Bước + data + expected |
+| Quan hệ | 1 viewpoint → 1..n test cases | 1 test case → đúng 1 viewpoint chính |
+
+```
+❌ BAD: "TC: Login thành công với user hợp lệ"  (đây là test case, không phải viewpoint)
+✅ GOOD: "VP: Xác thực đăng nhập khi credential hợp lệ"  (góc nhìn)
+         → sau đó mới sinh TC với user/password cụ thể
+```
+
+## Catalog — phải xét đủ nhóm (bỏ nhóm không liên quan, ghi lý do)
+
+| Nhóm | Góc nhìn điển hình |
+|---|---|
+| **Functional** | Rule nghiệp vụ, tính toán, kết quả happy path |
+| **Input / Field** | Required, format, length — **từng field** |
+| **Boundary** | min, min-1, max, max+1, empty, zero |
+| **Combination** | Nhiều điều kiện kết hợp (Decision Table / Pairwise) |
+| **State** | Chuyển trạng thái hợp lệ / không hợp lệ |
+| **Authorization** | Role, chưa login, IDOR, thao tác vượt quyền |
+| **Error Handling** | 4xx/5xx, timeout, mất mạng, message lỗi |
+| **Data Integrity** | Unique, FK, update đồng thời, xóa ràng buộc |
+| **Security** | XSS, SQLi, CSRF, lộ dữ liệu nhạy cảm |
+| **Resilience** | Double submit, session/token hết hạn giữa chừng |
+| **UI / A11y** | Disabled state, Tab order, focus, thông báo |
+| **Integration** | Module phụ thuộc, callback, dữ liệu xuyên module |
+
+## Quy tắc thiết kế
+
+1. Mỗi REQ/AC có **ít nhất 1** viewpoint.
+2. Mỗi input field: ≥1 positive + ≥2 negative/boundary viewpoint.
+3. Một viewpoint chỉ 1 concern — không gộp Email + Password vào cùng VP.
+4. Viewpoint phải **quan sát được** (expected behavior rõ, không chung chung).
+5. Gắn `Technique`: EP / BVA / Decision Table / State Transition / Error Guessing.
+6. Gắn `Risk`: High (tiền, bảo mật, dữ liệu mất) / Medium / Low.
+7. Xong danh sách viewpoint → **dừng**, chốt với user (FULL RBT) hoặc chuyển sang sinh TC (QUICK) nhưng vẫn in bảng viewpoint trước.
+
+## Output bắt buộc
+
+| VP ID | Category | Viewpoint | Source | Technique | Risk |
+|---|---|---|---|---|---|
+| VP_LOGIN_001 | Functional | Đăng nhập thành công với credential hợp lệ | REQ-01 | EP | High |
+| VP_LOGIN_002 | Input / Field | Email sai định dạng bị từ chối | REQ-02 | EP | High |
+| VP_LOGIN_003 | Boundary | Password đúng min length | REQ-03 | BVA | Medium |
+| VP_LOGIN_004 | Authorization | User bị khóa không đăng nhập được | REQ-04 | State | High |
+| VP_LOGIN_005 | Security | Email chứa payload XSS không được thực thi | REQ-02 | Error Guessing | High |
+
+Format VP ID: `VP_[MODULE]_[NNN]`
+
+## Anti-patterns
+
+- ❌ Viết test case giả danh viewpoint (có steps/data trong VP)
+- ❌ Copy requirement thành viewpoint ("Hệ thống cho phép đăng nhập")
+- ❌ Bỏ catalog: chỉ có happy path
+- ❌ Một VP cho cả form (nhiều field)
+- ❌ Viewpoint không truy vết được về REQ/AC

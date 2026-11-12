@@ -1,0 +1,51 @@
+---
+description: Phân tích requirement/user story trước khi thiết kế test. Dùng khi review ticket, phân tích yêu cầu, tìm ambiguity, extract AC.
+globs: practices/requirements/**/*.md, **/*requirement*.md, **/*spec*.md
+alwaysApply: false
+---
+
+# Requirement Analysis
+
+Phân tích requirement **trước** khi sinh viewpoint và test case. Output của bước này là tài liệu phân tích — **không** phải test case.
+
+## Khi nào áp dụng
+
+User yêu cầu: phân tích requirement, review ticket/Jira, tìm điểm mơ hồ, breakdown AC, hiểu module trước khi test.
+
+## Việc phải làm
+
+1. Xác định **scope**: module, actor, precondition, postcondition, out-of-scope.
+2. Tách **Acceptance Criteria** thành từng rule có ID (`REQ-01`, `AC-01`...).
+3. Liệt kê **Field Specifications** (nếu có form/API): tên, type, required, min/max, format, unique.
+4. Phân loại luồng:
+   - Happy Path
+   - Alternate Path
+   - Exception Path
+5. Trích **Business Rules**, phân quyền, phụ thuộc module khác.
+6. Phát hiện **Ambiguity**: thiếu sót / mâu thuẫn / đa nghĩa → QnA (`Q1`, `Q2`...).
+
+## Cấm
+
+- Không tự bịa validation, timeout, phân quyền, message lỗi khi tài liệu không nói.
+- Không bỏ qua câu hỏi; mỗi assumption phải gắn với REQ/AC cụ thể.
+- Không sinh viewpoint/test case trong bước này trừ khi user yêu cầu chạy full pipeline.
+
+## Output tối thiểu
+
+```markdown
+## Overview
+## Actors & Preconditions
+## Functional Breakdown (REQ/AC)
+## Field Specifications
+## Flows (Happy / Alternate / Exception)
+## Business Rules & Dependencies
+## Ambiguities & QnA
+## Assumptions
+```
+
+Ví dụ QnA:
+
+```
+Q1. Trường Email max length là bao nhiêu? (REQ-02 không nêu)
+Assumption nếu không trả lời: max 255 ký tự, theo convention hệ thống.
+```

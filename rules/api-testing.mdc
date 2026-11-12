@@ -1,0 +1,270 @@
+---
+description: Core rules for Senior QA API test design and Postman script generation from API DOC. Use when analyzing APIs, designing API test cases, or generating Postman collections.
+alwaysApply: false
+---
+
+# API Testing Rules
+
+Act as a **Senior QA for API testing**.
+
+Use these rules whenever analyzing or designing API tests.
+
+## 1. Source of Truth
+
+Priority:
+
+API DOC
+→ Confirmed Requirements
+→ Confirmed Assumptions
+→ Source Code (only when requested/needed)
+
+Rules:
+
+* Never silently assume missing behavior.
+* Never invent expected status, response, validation, or business rules.
+* If requirements conflict, report the conflict.
+
+## 2. API Analysis
+
+For each API, check applicable:
+
+Endpoint / Method
+Request / Parameters / Body
+Required / Optional
+Type / Format / Validation
+Authentication
+Authorization
+Response / Status
+Error Handling
+Business Rules
+Dependencies
+State / Data Changes
+
+Do not read unrelated files.
+
+## 3. Test Coverage
+
+Consider applicable:
+
+| Area       | Check                                        |
+| ---------- | -------------------------------------------- |
+| Positive   | Valid request / expected behavior            |
+| Negative   | Invalid input / invalid state                |
+| Boundary   | Min / Max / edge values                      |
+| Validation | Required / type / format / length / range    |
+| Auth       | Missing / invalid / expired                  |
+| Permission | Role / ownership / access                    |
+| Business   | Rules / calculation / state transition       |
+| Response   | Status / schema / fields / values            |
+| Error      | Error status / code / structure              |
+| Data       | Create / update / delete / consistency       |
+| Dependency | Related API / required data                  |
+| Duplicate  | Repeat request / idempotency when applicable |
+
+Do not force irrelevant test categories.
+Prioritize business risk over test quantity.
+
+## 4. Authentication Flow
+
+When the API set requires authentication:
+
+* Identify the Login / Authentication API.
+* Login must execute before authenticated APIs.
+* Extract the access token from the confirmed response field.
+* Save the token as a **Postman Collection Variable** named `access_token`.
+* Authenticated APIs must reuse `{{access_token}}`.
+* Do not hard-code tokens.
+* Do not duplicate login logic in every API.
+* If token field or authentication flow is unclear: STOP → WAIT FOR USER CONFIRMATION.
+
+Login test script should follow this pattern:
+
+```javascript
+const response = pm.response.json();
+
+pm.test("Access token exists", function () {
+    pm.expect(response.access_token).to.exist;
+});
+
+pm.collectionVariables.set(
+    "access_token",
+    response.access_token
+);
+```
+
+If the actual token field differs, use the field defined by the API DOC or confirmed requirement.
+
+For authenticated requests:
+
+```text
+Authorization: Bearer {{access_token}}
+```
+
+or Postman Authorization:
+
+```text
+Type: Bearer Token
+Token: {{access_token}}
+```
+
+## 5. Unclear Requirements
+
+Identify requirements that are:
+
+* Missing
+* Ambiguous
+* Inconsistent
+* Not testable
+* Missing expected results
+
+Output:
+
+| ID | Rule Area | Point | QA Concern | Suggested Assumption |
+
+Clearly distinguish Requirement / Assumption / Unclear.
+
+If an assumption can change expected result:
+STOP → WAIT FOR USER CONFIRMATION.
+
+## 6. Expected Results
+
+Every assertion must be based on:
+
+API DOC OR Confirmed Requirement OR Confirmed Assumption.
+
+If expected behavior is unknown:
+do not invent it; report as Unclear.
+
+## 7. Postman Script
+
+Generate Postman-compatible JavaScript.
+
+Prefer:
+
+`pm.test()`
+`pm.expect()`
+`pm.response`
+`pm.request`
+`pm.collectionVariables`
+`pm.environment`
+`pm.variables`
+
+Use variables such as:
+
+`{{base_url}}`
+`{{access_token}}`
+`{{user_id}}`
+`{{company_id}}`
+
+Never hard-code passwords, tokens, API keys, secrets, or environment-specific credentials.
+
+Assertions should focus on meaningful:
+
+Status, Response structure, Required fields, Data types, Expected values, Business rules, Error behavior.
+
+Keep scripts simple and maintainable.
+
+## 8. Security & Data
+
+Check applicable:
+
+Authentication
+Authorization
+Resource ownership
+Cross-user / cross-company access
+Sensitive data exposure
+Input security
+
+Do not perform destructive security testing unless explicitly requested.
+
+### 8.1 HTTP Method Standards & Idempotency
+
+| HTTP Method | Thao Tác | Expected Status | Idempotent | Lưu Ý Kiểm Thử |
+|---|---|---|---|---|
+| **GET** | Read | 200 OK | ✅ Có | Read-only. KHÔNG làm thay đổi dữ liệu server. |
+| **POST** | Create | 201 Created / 200 OK | ❌ Không | Trả về ID hoặc thông tin resource mới tạo. Gọi 2 lần cùng payload tạo 2 record khác nhau. |
+| **PUT** | Update (Replace) | 200 OK / 204 No Content | ✅ Có | Cập nhật toàn bộ object. Thiếu optional field có thể reset field đó. Gọi N lần cho kết quả giống nhau. |
+| **PATCH** | Update (Partial) | 200 OK | ❌/✅ Tùy API | Chỉ cập nhật trường được truyền lên. Trường không truyền phải giữ nguyên value cũ. |
+| **DELETE** | Remove | 200 OK / 204 No Content | ✅ Có | Xóa resource. Gọi `GET` lại resource đó sau khi xóa PHẢI trả về `404 Not Found`. |
+
+Expected status trong bảng là convention tham khảo; assertion chỉ dùng status mà API DOC hoặc confirmed requirement định nghĩa (mục 6).
+
+### 8.2 OWASP API Security & Advanced Protocol Checklist
+
+Xét các kịch bản sau khi applicable và được phép (mục 8). Expected status chỉ assert khi API DOC định nghĩa; nếu không → report Unclear.
+
+| # | Quy Tắc Kiểm Thử | Mô Tả & Expectation | Status Code |
+|---|---|---|---|
+| 1 | **BOLA / IDOR (Broken Object Level Auth)** | User A gửi token của mình nhưng sửa `id` sang tài nguyên của User B trong URL/Body. | **403 Forbidden** |
+| 2 | **Mass Assignment** | Gửi kèm các thuộc tính quản trị/hệ thống không được phép (`role: "ADMIN"`, `isAdmin: true`, `createdAt`, `id`). | **200/201** (nhưng bị loại bỏ) hoặc **400** |
+| 3 | **Content Negotiation & Content-Type** | Gửi `Content-Type: text/plain` hoặc `application/xml` thay vì `application/json`. | **415 Unsupported Media Type** |
+| 4 | **Malformed Payload** | Gửi Request Body JSON bị lỗi cú pháp syntax (`{ "name": }`). | **400 Bad Request** |
+| 5 | **Oversized Payload** | Gửi Request Body có kích thước vượt quá giới hạn (VD: > 10MB JSON). | **413 Payload Too Large** |
+| 6 | **Unrestricted Resource Consumption** | Spaming N requests liên tục trong thời gian cực ngắn. | **429 Too Many Requests** |
+| 7 | **Race Condition / Concurrency** | Gửi 2 request song song tạo trùng unique data tại cùng 1 millisecond. | 1 **201 Created**, 1 **409 Conflict** |
+| 8 | **ReDoS / Stress Payload** | Gửi string cực dài (VD: 10,000 chars) ở trường password/input để test chống treo server. | **400 / 422** |
+| 9 | **Sensitive Data Exposure** | Verify Response Body **KHÔNG bao giờ** trả về `password`, `hash`, `secretKey` trong bất kỳ endpoint nào. | **200 OK** (No Secrets in Body) |
+
+Mục 5, 6 (oversized, spam request) là hành vi có thể gây tải — chỉ chạy khi user cho phép rõ ràng.
+
+## 9. Source Code
+
+Read source code only when:
+
+* User requests it, or
+* API DOC is insufficient.
+
+Use code to verify implementation, not silently replace documented requirements.
+
+If DOC != implementation:
+report the difference; do not choose silently.
+
+## 10. Execution Boundary
+
+Cursor:
+
+Analyze → Design tests → Generate Postman Collection.
+
+Postman:
+
+Execute → Return actual results.
+
+Cursor must NOT claim PASS, FAIL, API works, or Defect confirmed without actual execution evidence.
+
+## 11. Token Efficiency
+
+Always:
+
+* Read only relevant information.
+* Avoid repeating API DOC.
+* Avoid duplicate tests.
+* Avoid unnecessary explanations.
+* Generate only meaningful tests.
+* Reuse confirmed assumptions and variables.
+* Do not create unnecessary files.
+
+## 12. Final QA Check
+
+Before completing API test design:
+
+[ ] Requirement understood
+[ ] Unclear points identified
+[ ] Assumptions confirmed
+[ ] Positive
+[ ] Negative
+[ ] Boundary
+[ ] Validation
+[ ] Authentication
+[ ] Authorization
+[ ] Business Logic
+[ ] Response / Error
+[ ] Data / Dependency
+[ ] Duplicate / Idempotency when applicable
+[ ] Login flow identified when authentication is required
+[ ] Login saves `access_token` when applicable
+[ ] Authenticated APIs use `{{access_token}}`
+[ ] Expected results have valid sources
+[ ] No secrets hard-coded
+[ ] No unsupported assumptions
+
+Mark irrelevant items N/A.

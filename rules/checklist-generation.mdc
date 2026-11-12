@@ -1,0 +1,75 @@
+---
+description: Generate QA test checklist (WHAT to check) from Basic Design, mapped to Test Viewpoints. Use when creating or reviewing test checklists.
+globs: **/*checklist*.md, **/*checklist*.csv
+alwaysApply: false
+---
+
+# Test Checklist Generation
+
+## Objective
+
+Generate a QA test checklist based on the Basic Design.
+
+The checklist represents WHAT needs to be checked,
+not detailed test execution steps.
+
+## Input
+
+Use the provided Basic Design as the primary source.
+
+Also use:
+- Test Viewpoint
+- Tester Rules
+- Existing project testing guidelines
+
+## Process
+
+1. Analyze the Basic Design.
+2. Identify all testable screens, functions, components,
+   inputs, outputs, transitions and business rules.
+3. Identify applicable Test Viewpoints.
+4. Generate checklist items based on:
+   - Basic Design
+   - Applicable Test Viewpoints
+5. Check whether important viewpoints are missing.
+6. Avoid duplicate checklist items.
+
+## Important Rules
+
+- Do not invent requirements.
+- Do not assume behavior that is not described in the Basic Design.
+- If information is unclear, mark it as "Need Clarification".
+- Do not create detailed test steps.
+- Do not create test data unless necessary for explaining the checklist.
+- Each checklist item should represent one test objective.
+
+## Checklist Categories
+
+Consider applicable categories such as:
+
+- UI
+- Function
+- Validation
+- Input
+- Output
+- Screen transition
+- Error handling
+- Performance
+- Security
+- Permission
+- Session
+- Compatibility
+
+## Output
+
+| ID | Screen/Function | Category | Test Viewpoint | Checklist | Source | Priority |
+|----|-----------------|----------|----------------|-----------|--------|----------|
+
+## Coverage
+
+After generating the checklist, provide:
+
+| Test Viewpoint | Applicable | Checklist IDs | Coverage |
+|----------------|------------|---------------|----------|
+
+Identify any applicable viewpoints that are not covered.

@@ -1,0 +1,85 @@
+---
+description: Chuẩn viết bug/defect report — tiêu đề, bước tái hiện, expected/actual, severity vs priority, evidence, môi trường, chống báo trùng. Dùng khi ghi FAIL, tạo defect, review bug report.
+globs: **/*defect*.md, **/*defect*.csv, **/*bug*.md, **/*bug*.csv
+alwaysApply: false
+---
+
+# Bug Report Rules
+
+Một bug report tốt cho phép dev **tái hiện được trong lần đọc đầu tiên** mà không cần hỏi lại.
+
+## 1. Trước khi báo bug
+
+1. **Tái hiện lại** ít nhất 1 lần nữa. Không tái hiện được → ghi rõ tần suất (`2/5 lần`) và điều kiện nghi ngờ.
+2. **Đối chiếu spec**: Expected phải có nguồn (REQ/AC, Basic Design No., API DOC, QnA đã trả lời). Spec không nói → **không phải bug**; ghi nhận hành vi thực tế và đưa vào QnA / `open-questions.md`.
+3. **Chống trùng**: tra `known-issues-and-lessons.md` và danh sách defect hiện có. Trùng → cập nhật bug cũ (thêm evidence/môi trường), không tạo mới.
+4. **Loại trừ nguyên nhân phía test**: sai test data, sai account/role, môi trường chưa deploy, cache, lỗi validation HTML5 của trình duyệt khác với message của app.
+5. **Phân biệt FE/BE** khi có thể: xem request/response (Network, intercept XHR/fetch) để biết lỗi nằm ở đâu.
+
+## 2. Các trường bắt buộc
+
+| Trường | Yêu cầu |
+|---|---|
+| **Bug ID** | Theo quy ước project / tool (Jira, Backlog). Chưa có → `BUG_<MODULE>_<NNN>` |
+| **Title** | `[Màn hình/API] Hành động + điều kiện → kết quả sai`. Ví dụ: `[C004 スタッフ管理] Lưu staff có email nhưng bỏ trống mật khẩu → báo lỗi bắt buộc` |
+| **Environment** | Môi trường (DEV/STG/PROD), URL, build/version, browser + version, OS/device, account/role (không ghi password) |
+| **Pre-conditions** | Trạng thái data/config cần có trước khi thực hiện |
+| **Steps to Reproduce** | Đánh số, nguyên tử, có giá trị cụ thể (nhập gì, vào đâu, bấm gì) |
+| **Expected Result** | Trích nguyên văn spec + nguồn (`BD No.19`, `REQ-03`, `API DOC POST /users`) |
+| **Actual Result** | Hiện tượng quan sát được, trích nguyên văn message/status code |
+| **Evidence** | Screenshot/video, request/response, console log, trace. Che (mask) token, password, PII |
+| **Severity** | Mức ảnh hưởng kỹ thuật/nghiệp vụ (bảng mục 3) |
+| **Priority** | Mức khẩn cấp cần sửa (bảng mục 3) — do PO/PM chốt, QA chỉ đề xuất |
+| **Frequency** | `Always` / `Intermittent (x/y)` / `Once` |
+| **Related** | TC ID / Checklist ID, REQ/AC, QnA ID, bug liên quan |
+
+## 3. Severity vs Priority
+
+| Severity | Định nghĩa |
+|---|---|
+| **Critical** | Crash, mất/hỏng dữ liệu, lỗ hổng bảo mật, lộ dữ liệu giữa tenant, chặn luồng chính không có đường vòng |
+| **Major** | Chức năng chính sai, có đường vòng nhưng khó; sai tính toán/report quan trọng; sai phân quyền |
+| **Minor** | Chức năng phụ sai, có đường vòng dễ; validation/message sai |
+| **Trivial** | Cosmetic: chính tả, căn lề, màu sắc không ảnh hưởng thao tác |
+
+| Priority | Định nghĩa |
+|---|---|
+| **P1 / Urgent** | Phải sửa trước release / hotfix |
+| **P2 / High** | Sửa trong sprint hiện tại |
+| **P3 / Medium** | Lên kế hoạch sửa |
+| **P4 / Low** | Sửa khi có thời gian |
+
+Severity và Priority **độc lập**: lỗi chính tả trên logo trang chủ có thể `Trivial` nhưng `P1`.
+
+## 4. Viết rõ ràng
+
+```
+❌ "Không lưu được"
+✅ "Bấm 保存 với 電話番号 = 0901234567 (10 số) → toast 電話番号は11桁で入力してください, bản ghi không được lưu"
+
+❌ "Lỗi khi đăng nhập"
+✅ "POST /api/login trả 500 khi email chứa dấu + (qa+01@example.test); expected 200 theo API DOC"
+```
+
+- Một bug report = **một** lỗi. Nhiều lỗi → tách report, liên kết với nhau.
+- Không viết cảm tính ("rất tệ", "lỗi nghiêm trọng"); để Severity thể hiện.
+- Không đề xuất cách sửa code trừ khi chắc chắn; có thể ghi "Nghi ngờ" ở mục Note.
+
+## 5. Cấm
+
+- ❌ Báo bug khi chưa có evidence thực tế
+- ❌ Báo bug khi Expected không có nguồn spec (dùng QnA thay thế)
+- ❌ Tạo evidence, bug ID, kết quả giả
+- ❌ Ghi password/token/PII thật vào report hoặc screenshot không che
+- ❌ Gộp nhiều lỗi vào 1 report
+
+## 6. Self-check
+
+- [ ] Đã tái hiện lại và ghi Frequency
+- [ ] Đã tra known issues, không trùng
+- [ ] Title nói rõ màn hình + hành động + kết quả sai
+- [ ] Steps cụ thể, người khác làm theo được
+- [ ] Expected có nguồn spec, Actual trích nguyên văn
+- [ ] Có evidence, đã che dữ liệu nhạy cảm
+- [ ] Severity và Priority đánh giá riêng biệt
+- [ ] Liên kết TC/Checklist ID
